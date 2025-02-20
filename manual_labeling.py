@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import shutil
 import time
+import re 
 
 # Global variables for storing points and direction
 points = []
@@ -52,9 +53,10 @@ def select_points(image, lines_file):
 
         elif key == ord('r'):  # Redo the current frame if needed
             print("Redoing the current frame...")
-            points = []  # Clear all points
+            points.clear() # Clear old points
             img = image.copy()  # Reset the image
             cv2.imshow("Image", img)  # Redisplay the image for re-selection
+            cv2.setMouseCallback("Image", click_event, img) # Re-register mouse clicks
 
         elif key == 81:  # Left arrow key
             print("Direction: Left")
@@ -105,8 +107,10 @@ def process_image_sequence(input_dir, output_dir, step_size=250, adjustment_fact
     Process the images and lines.txt files in sequence, allowing manual input every 60 frames
     and automating the next 59 frames with directional adjustments.
     """
-    files = sorted([f for f in os.listdir(input_dir) if f.endswith('.jpg')], key=lambda x: int(x.split('.')[0]))
-
+    files = sorted(
+    [f for f in os.listdir(input_dir) if f.endswith('.jpg')],
+    key=lambda x: int(re.search(r'\d+', x).group()) if re.search(r'\d+', x) else float('inf')
+)
     for i in range(0, len(files), step_size):
         image_path = os.path.join(input_dir, files[i])
         lines_file = image_path.replace('.jpg', '.lines.txt')
